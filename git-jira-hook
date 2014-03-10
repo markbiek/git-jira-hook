@@ -2,6 +2,7 @@
 
 ##########################################################################
 # Copyright 2009 Broadcom Corporation
+# Updated 2014
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -16,7 +17,8 @@
 # limitations under the License. 
 
 # File: git-jira-hook
-# Author: Joyjit Nath
+# Author: Mark Biek
+# Original Author: Joyjit Nath
 #
 ###########################################################################
 
@@ -196,6 +198,9 @@ def handle_update():
 
     for commit_id in commit_id_array:
         commit_text = git_get_commit_msg(commit_id)
+        """
+        We've removed the validation of the commit message so that you can still 
+        have commit messages that don't refer to a jira case"""
         """if validate_commit_text(jira_soap_client, jira_auth, commit_text, commit_id) != 0:
             return -1"""
         
@@ -275,8 +280,6 @@ def jira_add_comment(jira_soap_client, jira_auth, commit_id, commit_text):
                                 jira_soap_client, jira_auth, commit_text_with_url)
     call_pattern_hook(commit_text, 'fixes', jira_add_comment_to_issue, \
                                 jira_soap_client, jira_auth, commit_text_with_url)
-    """call_pattern_hook(commit_text, 'fixes', jira_add_comment_to_and_fix_issue, \
-                                jira_soap_client, jira_auth, commit_text_with_url)"""
     return
     
 # Given a function pointer, iterates through the commit message 
@@ -381,23 +384,9 @@ def jira_explicit_login(soap_client):
         if retry_count > 0:
             logging.info("Invalid Jira password/username combination, try again")
 
-        # We now need to read the Jira username/password from
-        # the console.
-        # However, there is a problem. When git hooks are invoked
-        # stdin is pointed to /dev/null, see here:
-        # http://kerneltrap.org/index.php?q=mailarchive/git/2008/3/4/1062624/thread
-        # The work-around is to re-assign stdin back to /dev/tty , as per
-        # http://mail.python.org/pipermail/patches/2002-February/007193.html
-        """sys.stdin = open('/dev/tty', 'r')
-
-        username = raw_input('Jira username: ')
-        password = getpass.getpass('Jira password: ')"""
-
         username = __USERNAME
         password = __PASSWORD
 
-        # print "abc"
-        # print "self.soap_client login...%s " % username + password
         try:
             auth = soap_client.login(username, password) 
 
@@ -454,13 +443,6 @@ def jira_add_comment_to_issue(issuekey, jira_soap_client, jira_auth, jira_text):
         logging.error("Error adding comment to issue '%s' in Jira", issuekey)
         logging.debug(e)
         return -1
-
-
-# TODO: Not fully implemented yet!
-def jira_add_comment_to_and_fix_issue(issuekey, jira_soap_client, jira_text):
-    return jira_add_comment_to_issue(issuekey, jira_soap_client, jira_text)
-
-
 
 
 #-----------------------------------------------------------------------------
